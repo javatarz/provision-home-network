@@ -1,2 +1,7 @@
+# Execution
 ansible~=8.1.0
 passlib~=1.7.0
+
+# Test/lint
+ansible-lint~=6.17.0
+pre-commit~=3.3.0

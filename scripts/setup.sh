@@ -25,6 +25,10 @@ echo
 echo "> Installing dependencies"
 pip install --upgrade pip -r ./scripts/requirements.txt 1>/dev/null
 
+echo
+echo "> Installing ansible modules"
+ansible-galaxy collection install $(cat ./scripts/ansible-modules.txt)
+
 remote_host="jetblade.local"
 echo
 echo "> Setting up SSH key for $remote_host"
