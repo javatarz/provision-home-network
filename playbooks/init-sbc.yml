@@ -3,33 +3,42 @@
   hosts: all
   gather_facts: false
   vars_prompt:
-    - name: new_user_password
-      prompt: "Enter new user password"
+    - name: ansible_become_password
+      prompt: "Enter old user password"
       private: true
-  vars:
-    ansible_user: debian
-    ansible_become_password: temppwd
-    server:
-      hostname: jetblade
-      timezone: Asia/Kolkata
+      default: temppwd
+    - name: new_user_password
+      prompt: "Enter new user password (leave empty to skip)"
+      private: true
+    - name: new_hostname
+      prompt: "Enter new hostname"
+      private: true
+      default: jetblade
+    - name: new_timezone
+      prompt: "Enter new timezone"
+      private: true
+      default: Asia/Kolkata
   become: true
 
   tasks:
     - name: Update timezone
       community.general.timezone:
-        name: "{{ server.timezone }}"
+        name: "{{ new_timezone }}"
 
     - name: Update hostname
       ansible.builtin.hostname:
-        name: "{{ server.hostname }}"
+        name: "{{ new_hostname }}"
 
     - name: Change hostname for mDNS resolution
       ansible.builtin.replace:
         dest: /etc/hosts
         regexp: '^([0127.]+\s+).+\.localdomain\s+.+$'
-        replace: '\1{{ server.hostname }}.localdomain {{ server.hostname }}'
+        replace: '\1{{ new_hostname }}.localdomain {{ new_hostname }}'
 
-    - name: Update user password
-      ansible.builtin.user:
-        name: "{{ ansible_user }}"
-        password: "{{ new_user_password | password_hash('sha512', 65534) }}"
+    - name: Update user password if a new one was provided
+      block:
+        - name: Update user password
+          ansible.builtin.user:
+            name: "{{ ansible_user }}"
+            password: "{{ new_user_password | password_hash('sha512', 65534) }}"
+          when: new_user_password is defined
