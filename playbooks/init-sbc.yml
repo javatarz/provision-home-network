@@ -4,11 +4,11 @@
   gather_facts: false
   vars_prompt:
     - name: ansible_become_password
-      prompt: "Enter old user password"
+      prompt: "Enter old user password (for sudo)"
       private: true
       default: temppwd
     - name: new_user_password
-      prompt: "Enter new user password (leave empty to skip)"
+      prompt: "Enter new user password (leave empty to skip password change)"
       private: true
     - name: new_hostname
       prompt: "Enter new hostname"
