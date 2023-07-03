@@ -1,0 +1,35 @@
+---
+- name: Update Hostname, Timezone, and User Password
+  hosts: all
+  gather_facts: false
+  vars_prompt:
+    - name: new_user_password
+      prompt: "Enter new user password"
+      private: true
+  vars:
+    ansible_user: debian
+    ansible_become_password: temppwd
+    server:
+      hostname: jetblade
+      timezone: Asia/Kolkata
+  become: true
+
+  tasks:
+    - name: Update timezone
+      community.general.timezone:
+        name: "{{ server.timezone }}"
+
+    - name: Update hostname
+      ansible.builtin.hostname:
+        name: "{{ server.hostname }}"
+
+    - name: Change hostname for mDNS resolution
+      ansible.builtin.replace:
+        dest: /etc/hosts
+        regexp: '^([0127.]+\s+).+\.localdomain\s+.+$'
+        replace: '\1{{ server.hostname }}.localdomain {{ server.hostname }}'
+
+    - name: Update user password
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        password: "{{ new_user_password | password_hash('sha512', 65534) }}"

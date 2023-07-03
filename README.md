@@ -7,3 +7,8 @@ Run `./scripts/setup.sh`
 
 ### Pre-requisites
 - `pyenv`
+
+## Execution
+```
+ansible-playbook -i inventory/hosts.ini playbooks/init-sbc.ym
+```
