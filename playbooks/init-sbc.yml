@@ -12,11 +12,9 @@
       private: true
     - name: new_hostname
       prompt: "Enter new hostname"
-      private: true
       default: jetblade
     - name: new_timezone
       prompt: "Enter new timezone"
-      private: true
       default: Asia/Kolkata
   become: true
 
@@ -35,10 +33,20 @@
         regexp: '^([0127.]+\s+).+\.localdomain\s+.+$'
         replace: '\1{{ new_hostname }}.localdomain {{ new_hostname }}'
 
+    - name: Add sudoers entry for passwordless apt commands
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/passwordless_apt
+        line: "{{ ansible_user }} ALL=(ALL) NOPASSWD: /usr/bin/apt"
+        create: true
+        owner: root
+        group: root
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
     - name: Update user password if a new one was provided
       block:
         - name: Update user password
           ansible.builtin.user:
             name: "{{ ansible_user }}"
             password: "{{ new_user_password | password_hash('sha512', 65534) }}"
-          when: new_user_password is defined
+          when: new_user_password != ""
