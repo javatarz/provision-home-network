@@ -12,6 +12,7 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: requirements-txt-fixer
+        files: ^scripts/requirements\.txt$
   - repo: https://github.com/ansible/ansible-lint
     rev: v6.17.2
     hooks:
