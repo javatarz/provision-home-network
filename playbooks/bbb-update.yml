@@ -1,0 +1,53 @@
+---
+- name: Update everything
+  hosts: all
+  gather_facts: false
+  vars_prompt:
+    - name: ansible_become_password
+      prompt: "Enter user password (for sudo)"
+      private: true
+      default: temppwd
+
+  tasks:
+    - name: Update local cache
+      ansible.builtin.apt:
+        update_cache: true
+      become: true
+
+    - name: Upgrade all applications
+      ansible.builtin.apt:
+        upgrade: dist
+      become: true
+
+    - name: Upgrade the operating system
+      ansible.builtin.apt:
+        upgrade: full
+      become: true
+
+    - name: Cleanup apt
+      ansible.builtin.apt:
+        autoclean: true
+        autoremove: true
+      become: true
+
+    - name: Search for bbb.io-kernel packages
+      ansible.builtin.command: apt-cache search bbb.io-kernel
+      register: package_list
+      changed_when: false
+
+    - name: Filter and extract latest version
+      ansible.builtin.set_fact:
+        latest_package: >-
+          {{
+            package_list.stdout_lines |
+            select('regex', '^bbb.io-kernel-\d+.\d+-ti-am335x') |
+            sort |
+            last |
+            regex_replace('^([^ ]+).*$', '\1')
+          }}
+
+    - name: Install latest kernel
+      ansible.builtin.apt:
+        name: "{{ latest_package }}"
+        state: present
+      become: true
