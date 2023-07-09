@@ -40,3 +40,21 @@
             name: "{{ ansible_user }}"
             password: "{{ new_user_password | password_hash('sha512', 65534) }}"
           when: new_user_password != ""
+
+    - name: Stop services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        masked: true
+        enabled: false
+      loop:
+        - nodered
+        - wpa_supplicant
+        - cloud9.service
+        - cloud9.socket
+        - cloud9
+        - bonescript.service
+        - bonescript.socket
+        - bonescript-autorun.service
+        - avahi-daemon.service
+        - nginx.service
