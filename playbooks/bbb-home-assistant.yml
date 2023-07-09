@@ -1,0 +1,75 @@
+---
+- name: Install home assistant
+  hosts: all
+  gather_facts: false
+  vars_prompt:
+    - name: ansible_become_password
+      prompt: "Enter user password (for sudo)"
+      private: true
+      default: temppwd
+  become: true
+
+  tasks:
+    - name: Install apps that are required
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        update_cache: true
+      loop:
+        - jq
+        - wget
+        - curl
+        - udisks2
+        - libglib2.0-bin
+        - network-manager
+        - dbus
+        - apparmor-utils
+        - systemd-journal-remote
+        - lsb-release
+
+    - name: Add GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: Debian release codename
+      ansible.builtin.command: lsb_release -cs
+      register: debian_release
+      changed_when: false
+
+    - name: Add docker repository to apt
+      ansible.builtin.apt_repository:
+        repo: deb https://download.docker.com/linux/debian {{ debian_release.stdout_lines[0] }} stable
+        state: present
+
+    - name: Install docker
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        update_cache: true
+      loop:
+        - docker-ce
+        - docker-compose
+
+    - name: Check docker is active
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Ensure group "docker" exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Adding debian to docker group
+      ansible.builtin.user:
+        name: debian
+        groups: docker
+        append: true
+
+    - name: Install Home Assistant - OS Agent
+      ansible.builtin.apt:
+        deb: https://github.com/home-assistant/os-agent/releases/download/1.5.1/os-agent_1.5.1_linux_armv7.deb
+
+    - name: Install Home Assistant - Supervised
+      ansible.builtin.apt:
+        deb: https://github.com/home-assistant/supervised-installer/releases/latest/download/homeassistant-supervised.deb
